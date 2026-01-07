@@ -1,0 +1,442 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>按钮编辑器</title>
+<style>
+    body {
+        background: linear-gradient(120deg, #f0f4f8 0%, #e0e7ef 100%);
+        font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .main-card {
+        max-width: 600px;
+        margin: 40px auto 0 auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        padding: 32px 28px 24px 28px;
+    }
+    h2 {
+        text-align: center;
+        color: #2d3a4b;
+        margin-bottom: 24px;
+        letter-spacing: 2px;
+    }
+    .addButton {
+        font-size: 16px;
+        padding: 8px 20px;
+        margin: 6px 6px 6px 0;
+        border: none;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #007bff 60%, #0056b3 100%);
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+        transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    }
+    .addButton:hover {
+        background: linear-gradient(90deg, #0056b3 60%, #007bff 100%);
+        box-shadow: 0 4px 16px rgba(0,123,255,0.12);
+        transform: translateY(-2px) scale(1.04);
+    }
+    #buttonContainer {
+        margin-bottom: 20px;
+        min-height: 40px;
+        padding: 12px 0;
+        border-radius: 8px;
+        background: #f6fafd;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+    .buttonRow {
+        margin-bottom: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .button {
+        display: inline-block;
+        padding: 10px 18px;
+        margin: 2px 0;
+        background: linear-gradient(90deg, #34d058 60%, #28a745 100%);
+        color: #fff;
+        cursor: pointer;
+        border-radius: 6px;
+        user-select: none;
+        font-size: 15px;
+        box-shadow: 0 2px 8px rgba(52,208,88,0.10);
+        border: none;
+        transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        position: relative;
+    }
+    .button:hover {
+        background: linear-gradient(90deg, #28a745 60%, #34d058 100%);
+        box-shadow: 0 4px 16px rgba(52,208,88,0.16);
+        transform: scale(1.06);
+    }
+    .button.dragging {
+        opacity: 0.5;
+        border: 2px dashed #007bff;
+    }
+    /* 修改后的菜单样式 */
+    .button-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #007bff;
+        border: 1px solid #0056b3;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+        z-index: 9999;
+        min-width: 100px;
+        user-select: none;
+    }
+    .button-menu div {
+        padding: 8px 16px;
+        cursor: pointer;
+        white-space: nowrap;
+        color: #fff;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+    }
+    .button-menu div:hover {
+        background-color: #0056b3;
+    }
+    .inputField {
+        width: 100%;
+        height: 36px;
+        font-size: 15px;
+        margin: 6px 0 12px 0;
+        border: 1.5px solid #d0d7e2;
+        border-radius: 6px;
+        padding: 8px 12px;
+        box-sizing: border-box;
+        background: #f8fafc;
+        transition: border 0.2s;
+    }
+    .inputField:focus {
+        border: 1.5px solid #007bff;
+        outline: none;
+        background: #fff;
+    }
+    .form-label {
+        font-weight: bold;
+        color: #2d3a4b;
+        margin-bottom: 2px;
+        display: block;
+        font-size: 14px;
+    }
+    .tips {
+        color: #888;
+        font-size: 13px;
+        margin-top: 18px;
+        background: #f6fafd;
+        border-radius: 6px;
+        padding: 10px 14px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    /* 编辑模态框样式 */
+    #editModal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+    }
+    #editModal > div {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        max-width: 300px;
+        width: 90%;
+        box-sizing: border-box;
+    }
+    #editModal h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+    #editModal input[type="text"] {
+        width: 100%;
+        margin-bottom: 12px;
+        padding: 8px;
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+    #editModal button {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    #editModal .btn-cancel {
+        margin-right: 12px;
+        background: #ccc;
+        color: #333;
+    }
+    #editModal .btn-confirm {
+        background: #007bff;
+        color: #fff;
+    }
+
+/* 新增复制配置按钮颜色样式 */
+.copyButton {
+    background: linear-gradient(90deg, #ff7e00 60%, #d65a00 100%);
+    box-shadow: 0 2px 8px rgba(255,126,0,0.3);
+}
+.copyButton:hover {
+    background: linear-gradient(90deg, #d65a00 60%, #ff7e00 100%);
+    box-shadow: 0 4px 16px rgba(255,126,0,0.5);
+    transform: translateY(-2px) scale(1.04);
+}
+
+
+
+
+</style>
+</head>
+<body>
+
+<div class="main-card">
+    <h2>按钮编辑器</h2>
+    <button onclick="pasteFromClipboard()" class="addButton">粘贴配置</button>
+    <button onclick="copyConfig()" class="addButton copyButton">复制配置</button>
+    <div id="buttonContainer"></div>
+    <div style="margin-top:18px;">
+        <button onclick="showAddModal('sameLine')" class="addButton">添加按钮</button>
+        <button onclick="showAddModal('newLine')" class="addButton">换行添加</button>
+	
+    </div>
+    <div class="tips">
+        <b>1️⃣拖动按钮调整位置</b><br/>
+	<b>2️⃣拖动按钮重叠互换位置</b><br/>
+        <b>3️⃣点击生成的按钮可以编辑或删除</b><br/>
+	<br/>
+
+        <b>👉编辑按钮完成后点击复制配置然后回到机器人粘贴发送完成设置👈</b>
+    </div>
+</div>
+
+<!-- 编辑/添加 模态框 -->
+<div id="editModal">
+    <div>
+        <h3>填写按钮信息</h3>
+        <input id="editTitleInput" type="text" placeholder="按钮标题" />
+        <input id="editLinkInput" type="text" placeholder="按钮链接" />
+        <div style="text-align:right;">
+            <button class="btn-cancel" onclick="closeEditModal()">取消</button>
+            <button class="btn-confirm" onclick="confirmEdit()">确定</button>
+        </div>
+    </div>
+</div>
+
+<!-- 省略 <head> 和样式部分，保持和你原来的一致 -->
+<script>
+let buttonConfigData = [];
+let draggingBtnPos = null;
+let currentEditPos = null;
+let addMode = null; // "sameLine" 或 "newLine"
+
+function parseConfig(text) {
+    return text.trim().split("\n").map(line => line.split("|").filter(Boolean));
+}
+
+function generateButtons() {
+    const container = document.getElementById("buttonContainer");
+    container.innerHTML = "";
+    buttonConfigData.forEach((line, rowIndex) => {
+        const rowDiv = document.createElement("div");
+        rowDiv.classList.add("buttonRow");
+        line.forEach((btnText, colIndex) => {
+            const [title, link] = btnText.split("&");
+            if (title && link) {
+                const button = document.createElement("div");
+                button.className = "button";
+                button.innerText = title;
+                button.dataset.link = link;
+                button.dataset.row = rowIndex;
+                button.dataset.col = colIndex;
+                button.draggable = true;
+
+                button.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    closeAllMenus();
+
+                    const rect = button.getBoundingClientRect();
+                    const menu = document.createElement("div");
+                    menu.className = "button-menu";
+                    menu.style.position = "fixed";
+                    menu.style.top = (rect.bottom + window.scrollY) + "px";
+                    menu.style.left = (rect.left + window.scrollX) + "px";
+                    menu.innerHTML = `
+                        <div onclick="editButton(${rowIndex},${colIndex}); closeAllMenus();">编辑</div>
+                        <div onclick="removeButton(${rowIndex},${colIndex}); closeAllMenus();">删除</div>
+                    `;
+                    document.body.appendChild(menu);
+                });
+
+                button.addEventListener("dragstart", (e) => {
+                    draggingBtnPos = { row: rowIndex, col: colIndex };
+                    e.dataTransfer.setData("text/plain", "drag");
+                    e.target.classList.add("dragging");
+                });
+
+                button.addEventListener("dragend", (e) => {
+                    e.target.classList.remove("dragging");
+                    draggingBtnPos = null;
+                });
+
+                button.addEventListener("dragover", (e) => e.preventDefault());
+
+                button.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const toRow = rowIndex;
+    const toCol = colIndex;
+    const from = draggingBtnPos;
+    if (!from) return;
+
+    const fromBtn = buttonConfigData[from.row][from.col];
+
+    // 如果拖到自己，忽略
+    if (from.row === toRow && from.col === toCol) return;
+
+    const rect = button.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const width = rect.width;
+
+    // 👇 如果鼠标在按钮中央区域，执行交换操作
+    if (offsetX >= width * 0.33 && offsetX <= width * 0.66) {
+        const temp = buttonConfigData[toRow][toCol];
+        buttonConfigData[toRow][toCol] = fromBtn;
+        buttonConfigData[from.row][from.col] = temp;
+        generateButtons();
+        return;
+    }
+
+    // 👇 其余情况为“插入”操作
+    // 先移除源按钮
+    buttonConfigData[from.row].splice(from.col, 1);
+    if (buttonConfigData[from.row].length === 0) {
+        buttonConfigData.splice(from.row, 1);
+        if (from.row < toRow) toRow--;
+    }
+
+    let insertAt = toCol;
+    if (offsetX < width * 0.33) {
+        insertAt = toCol;
+    } else {
+        insertAt = toCol + 1;
+    }
+
+    if (!buttonConfigData[toRow]) buttonConfigData[toRow] = [];
+    buttonConfigData[toRow].splice(insertAt, 0, fromBtn);
+
+    generateButtons();
+});
+
+                rowDiv.appendChild(button);
+            }
+        });
+        container.appendChild(rowDiv);
+    });
+}
+
+function closeAllMenus() {
+    document.querySelectorAll(".button-menu").forEach(menu => menu.remove());
+}
+document.addEventListener("click", closeAllMenus);
+
+function editButton(row, col) {
+    currentEditPos = {row, col};
+    addMode = null;
+    const current = buttonConfigData[row][col];
+    const [title, link] = current.split("&");
+    document.getElementById("editTitleInput").value = title;
+    document.getElementById("editLinkInput").value = link;
+    document.getElementById("editModal").style.display = "flex";
+    closeAllMenus();
+}
+
+function showAddModal(mode) {
+    currentEditPos = null;
+    addMode = mode;
+    document.getElementById("editTitleInput").value = "";
+    document.getElementById("editLinkInput").value = "";
+    document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+    addMode = null;
+}
+
+function confirmEdit() {
+    const newTitle = document.getElementById("editTitleInput").value.trim();
+    const newLink = document.getElementById("editLinkInput").value.trim();
+    if (!newTitle || !newLink) {
+        alert("按钮标题和按钮链接不能为空");
+        return;
+    }
+
+    if (currentEditPos) {
+        buttonConfigData[currentEditPos.row][currentEditPos.col] = `${newTitle}&${newLink}`;
+    } else if (addMode === "sameLine") {
+        if (buttonConfigData.length === 0) buttonConfigData.push([]);
+        buttonConfigData[buttonConfigData.length - 1].push(`${newTitle}&${newLink}`);
+    } else if (addMode === "newLine") {
+        buttonConfigData.push([`${newTitle}&${newLink}`]);
+    }
+
+    generateButtons();
+    closeEditModal();
+}
+
+function removeButton(row, col) {
+    buttonConfigData[row].splice(col, 1);
+    buttonConfigData = buttonConfigData.filter(row => row.length > 0);
+    generateButtons();
+}
+
+function copyConfig() {
+    const text = buttonConfigData.map(row => row.join("|")).join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+        alert("复制成功，请返回粘贴发送给机器人！");
+    });
+}
+
+function pasteFromClipboard() {
+    navigator.clipboard.readText().then(text => {
+        text = text.trim();
+        if (!text || !text.includes("&")) {
+            const defaultText = `按钮1&按钮1|按钮2&按钮2
+按钮3&按钮3|按钮4&按钮4
+按钮5&按钮5|按钮6&按钮6`;
+            buttonConfigData = parseConfig(defaultText);
+        } else {
+            buttonConfigData = parseConfig(text);
+        }
+        generateButtons();
+    }).catch(err => {
+        console.error('读取剪贴板失败：', err);
+        const defaultText = `按钮1&按钮1|按钮2&按钮2
+按钮3&按钮3|按钮4&按钮4
+按钮5&按钮5|按钮6&按钮6`;
+        buttonConfigData = parseConfig(defaultText);
+        generateButtons();
+    });
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+    pasteFromClipboard();
+});
+</script>
+
+
+</body>
+</html>
